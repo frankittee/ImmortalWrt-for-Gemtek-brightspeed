@@ -91,7 +91,7 @@ if grep -En "^CONFIG_(PACKAGE|DEFAULT)_${forbidden_packages}=y$" "$config_file";
 fi
 
 for package in "${required_packages[@]}"; do
-	# Per-device rootfs builds resolve device packages to =m; they still land in the image (checked against the manifest below).
+	# Per-device rootfs builds resolve device packages to =m; they still land in the device image.
 	if ! grep -Eqx "CONFIG_PACKAGE_${package}=[ym]" "$config_file"; then
 		echo "$profile config is missing required package: $package" >&2
 		failed=1
@@ -125,6 +125,8 @@ for manifest in "${manifests[@]}"; do
 	fi
 
 	for package in "${manifest_required_packages[@]}"; do
+		# =m device packages go only into the per-device image, not the shared target manifest.
+		grep -Fqx "CONFIG_PACKAGE_${package}=m" "$config_file" && continue
 		if ! grep -Eq "^${package}([[:space:]]|$)" "$manifest"; then
 			echo "$profile manifest is missing required package $package: $manifest" >&2
 			failed=1
